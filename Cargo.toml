@@ -2,7 +2,13 @@
 name = "eas"
 version = "0.1.0"
 edition = "2021"
+description = "Library for interacting with the Ethereum Attestation Service"
+repository = "https://github.com/brech1/eas-rs"
+license = "MIT"
 
 [dependencies]
 ethers = { version = "2.0.8" }
+log = { version = "0.4.19" }
+tokio = { version = "1.29.1", features = ["time", "macros", "rt-multi-thread", "net"] }
+
 eas-contracts = { path = "./eas-contracts" }
