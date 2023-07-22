@@ -8,12 +8,12 @@ use eas_contracts::{
 };
 use ethers::{
     middleware::SignerMiddleware,
+    prelude::ContractError,
     providers::{Http, Provider},
     signers::LocalWallet,
     types::Address,
 };
 use log::info;
-use std::fmt::Result as FmtResult;
 use std::sync::Arc;
 
 // Signer type alias.
@@ -53,9 +53,9 @@ impl Eas {
     /// # Returns
     ///
     /// A Result which is an Ok if the EAS was successfully deployed, else an Err.
-    pub async fn deploy(&self, schema_registry: Address) -> FmtResult {
-        let deployment = EAS::deploy(self.signer.clone(), schema_registry).unwrap();
-        let address = deployment.send().await.unwrap().address();
+    pub async fn deploy(&self, schema_registry: Address) -> Result<(), ContractError<Signer>> {
+        let deployment = EAS::deploy(self.signer.clone(), schema_registry)?;
+        let address = deployment.send().await?.address();
 
         info!("EAS deployed at: {:?}", address);
         Ok(())
@@ -79,9 +79,9 @@ impl Eas {
     /// # Returns
     ///
     /// A Result which is an Ok if the attestation was successful, else an Err.
-    pub async fn attest(&self, request: AttestationRequest) -> FmtResult {
+    pub async fn attest(&self, request: AttestationRequest) -> Result<(), ContractError<Signer>> {
         let call = self.eas.attest(request);
-        let res = call.send().await.unwrap();
+        let res = call.send().await?;
 
         info!("Attestation result: {:?}", res);
         Ok(())
@@ -99,9 +99,9 @@ impl Eas {
     pub async fn attest_by_delegation(
         &self,
         delegated_request: DelegatedAttestationRequest,
-    ) -> FmtResult {
+    ) -> Result<(), ContractError<Signer>> {
         let call = self.eas.attest_by_delegation(delegated_request);
-        let res = call.send().await.unwrap();
+        let res = call.send().await?;
 
         info!("Attestation by delegation result: {:?}", res);
         Ok(())
@@ -112,8 +112,8 @@ impl Eas {
     /// # Returns
     ///
     /// A Result which is an Ok if the attestation type hash was successfully retrieved, else an Err.
-    pub async fn get_attest_type_hash(&self) -> FmtResult {
-        let result = self.eas.get_attest_type_hash().call().await.unwrap();
+    pub async fn get_attest_type_hash(&self) -> Result<(), ContractError<Signer>> {
+        let result = self.eas.get_attest_type_hash().call().await?;
 
         info!("Attestation type hash: {:?}", result);
         Ok(())
@@ -128,8 +128,8 @@ impl Eas {
     /// # Returns
     ///
     /// A Result which is an Ok if the attestation was successfully retrieved, else an Err.
-    pub async fn get_attestation(&self, uid: [u8; 32]) -> FmtResult {
-        let result = self.eas.get_attestation(uid).call().await.unwrap();
+    pub async fn get_attestation(&self, uid: [u8; 32]) -> Result<(), ContractError<Signer>> {
+        let result = self.eas.get_attestation(uid).call().await?;
 
         info!("Attestation: {:?}", result);
         Ok(())
@@ -144,9 +144,12 @@ impl Eas {
     /// # Returns
     ///
     /// A Result which is an Ok if the multiple attestations were successful, else an Err.
-    pub async fn multi_attest(&self, requests: Vec<MultiAttestationRequest>) -> FmtResult {
+    pub async fn multi_attest(
+        &self,
+        requests: Vec<MultiAttestationRequest>,
+    ) -> Result<(), ContractError<Signer>> {
         let call = self.eas.multi_attest(requests);
-        let res = call.send().await.unwrap();
+        let res = call.send().await?;
 
         info!("Multi attestation result: {:?}", res);
         Ok(())
@@ -164,11 +167,11 @@ impl Eas {
     pub async fn multi_attest_by_delegation(
         &self,
         multi_delegated_requests: Vec<MultiDelegatedAttestationRequest>,
-    ) -> FmtResult {
+    ) -> Result<(), ContractError<Signer>> {
         let call = self
             .eas
             .multi_attest_by_delegation(multi_delegated_requests);
-        let res = call.send().await.unwrap();
+        let res = call.send().await?;
 
         info!("Multi attestation by delegation result: {:?}", res);
         Ok(())
@@ -183,9 +186,12 @@ impl Eas {
     /// # Returns
     ///
     /// A Result which is an Ok if the multiple revocations were successful, else an Err.
-    pub async fn multi_revoke(&self, multi_requests: Vec<MultiRevocationRequest>) -> FmtResult {
+    pub async fn multi_revoke(
+        &self,
+        multi_requests: Vec<MultiRevocationRequest>,
+    ) -> Result<(), ContractError<Signer>> {
         let call = self.eas.multi_revoke(multi_requests);
-        let res = call.send().await.unwrap();
+        let res = call.send().await?;
 
         info!("Multi revocation result: {:?}", res);
         Ok(())
@@ -203,11 +209,11 @@ impl Eas {
     pub async fn multi_revoke_by_delegation(
         &self,
         multi_delegated_requests: Vec<MultiDelegatedRevocationRequest>,
-    ) -> FmtResult {
+    ) -> Result<(), ContractError<Signer>> {
         let call = self
             .eas
             .multi_revoke_by_delegation(multi_delegated_requests);
-        let res = call.send().await.unwrap();
+        let res = call.send().await?;
 
         info!("Multi revocation by delegation result: {:?}", res);
         Ok(())
@@ -222,9 +228,12 @@ impl Eas {
     /// # Returns
     ///
     /// A Result which is an Ok if the multiple off-chain revocations were successful, else an Err.
-    pub async fn multi_revoke_offchain(&self, data: Vec<[u8; 32]>) -> FmtResult {
+    pub async fn multi_revoke_offchain(
+        &self,
+        data: Vec<[u8; 32]>,
+    ) -> Result<(), ContractError<Signer>> {
         let call = self.eas.multi_revoke_offchain(data);
-        let res = call.send().await.unwrap();
+        let res = call.send().await?;
 
         info!("Multi off-chain revocation result: {:?}", res);
         Ok(())
@@ -295,21 +304,26 @@ mod tests {
 
     #[tokio::test]
     async fn test_eas_new() {
+        let anvil = Anvil::new().spawn();
         setup_eas().await;
+        drop(anvil);
     }
 
     #[tokio::test]
     async fn test_eas_deploy() {
-        let _anvil = Anvil::new().spawn();
+        let anvil = Anvil::new().spawn();
         let eas = setup_eas().await;
         let schema_registry = Address::from([0x42; 20]);
 
-        assert!(eas.deploy(schema_registry).await.is_ok());
+        let res = eas.deploy(schema_registry).await;
+
+        assert!(res.is_ok());
+        drop(anvil);
     }
 
     #[tokio::test]
     async fn test_eas_attest() {
-        let _anvil = Anvil::new().spawn();
+        let anvil = Anvil::new().spawn();
         let eas = setup_eas().await;
         let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
@@ -328,12 +342,15 @@ mod tests {
             data,
         };
 
-        assert!(eas.attest(attestation_request).await.is_ok());
+        let res = eas.attest(attestation_request).await;
+
+        assert!(res.is_ok());
+        drop(anvil);
     }
 
     #[tokio::test]
     async fn test_eas_attest_by_delegation() {
-        let _anvil = Anvil::new().spawn();
+        let anvil = Anvil::new().spawn();
         let eas = setup_eas().await;
         let schema_registry: ethers::types::H160 = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
@@ -354,32 +371,43 @@ mod tests {
             attester: Address::zero(),
         };
 
-        assert!(eas
+        let res = eas
             .attest_by_delegation(delegated_attestation_request)
-            .await
-            .is_ok());
+            .await;
+
+        assert!(res.is_ok());
+        drop(anvil);
     }
 
     #[tokio::test]
     async fn test_eas_get_attest_type_hash() {
-        let _anvil = Anvil::new().spawn();
+        let anvil = Anvil::new().spawn();
         let eas = setup_eas().await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
         assert!(eas.get_attest_type_hash().await.is_ok());
+        drop(anvil);
     }
 
     #[tokio::test]
     async fn test_eas_get_attestation() {
-        let _anvil = Anvil::new().spawn();
+        let anvil = Anvil::new().spawn();
         let eas = setup_eas().await;
-        let uid = [0u8; 32]; // This is a placeholder. Replace with actual uid.
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let uid = [0u8; 32];
+
         assert!(eas.get_attestation(uid).await.is_ok());
+        drop(anvil);
     }
 
     #[tokio::test]
     async fn test_eas_multi_attest() {
-        let _anvil = Anvil::new().spawn();
+        let anvil = Anvil::new().spawn();
         let eas = setup_eas().await;
-        let schema_registry: ethers::types::H160 = Address::from([0x42; 20]);
+        let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
         let data = Eas::get_attestation_data(
@@ -400,13 +428,14 @@ mod tests {
             .multi_attest(vec![multi_attestation_request])
             .await
             .is_ok());
+        drop(anvil);
     }
 
     #[tokio::test]
     async fn test_eas_multi_attest_by_delegation() {
-        let _anvil = Anvil::new().spawn();
+        let anvil = Anvil::new().spawn();
         let eas = setup_eas().await;
-        let schema_registry: ethers::types::H160 = Address::from([0x42; 20]);
+        let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
         let data = Eas::get_attestation_data(
@@ -429,13 +458,14 @@ mod tests {
             .multi_attest_by_delegation(vec![multi_delegated_attestation_request])
             .await
             .is_ok());
+        drop(anvil);
     }
 
     #[tokio::test]
     async fn test_eas_multi_revoke() {
-        let _anvil = Anvil::new().spawn();
+        let anvil = Anvil::new().spawn();
         let eas = setup_eas().await;
-        let schema_registry: ethers::types::H160 = Address::from([0x42; 20]);
+        let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
         let revocation_request_data = RevocationRequestData {
@@ -452,13 +482,14 @@ mod tests {
             .multi_revoke(vec![multi_revocation_request])
             .await
             .is_ok());
+        drop(anvil);
     }
 
     #[tokio::test]
     async fn test_eas_multi_revoke_by_delegation() {
-        let _anvil = Anvil::new().spawn();
+        let anvil = Anvil::new().spawn();
         let eas = setup_eas().await;
-        let schema_registry: ethers::types::H160 = Address::from([0x42; 20]);
+        let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
         let revocation_request_data = RevocationRequestData {
@@ -477,17 +508,19 @@ mod tests {
             .multi_revoke_by_delegation(vec![multi_delegated_revocation_request])
             .await
             .is_ok());
+        drop(anvil);
     }
 
     #[tokio::test]
     async fn test_eas_multi_revoke_offchain() {
-        let _anvil = Anvil::new().spawn();
+        let anvil = Anvil::new().spawn();
         let eas = setup_eas().await;
-        let schema_registry: ethers::types::H160 = Address::from([0x42; 20]);
+        let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
-        let data = [0u8; 32]; // This is a placeholder. Replace with actual data.
+        let data = [0u8; 32];
 
         assert!(eas.multi_revoke_offchain(vec![data]).await.is_ok());
+        drop(anvil);
     }
 }
