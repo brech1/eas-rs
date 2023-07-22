@@ -2,8 +2,8 @@ use eas_contracts::{
     eas::EAS,
     value_resolver::{
         AttestationRequest, AttestationRequestData, DelegatedAttestationRequest,
-        MultiAttestationRequest, MultiDelegatedAttestationRequest, MultiDelegatedRevocationRequest,
-        MultiRevocationRequest,
+        DelegatedRevocationRequest, MultiAttestationRequest, MultiDelegatedAttestationRequest,
+        MultiDelegatedRevocationRequest, MultiRevocationRequest, RevocationRequest,
     },
 };
 use ethers::{
@@ -11,7 +11,7 @@ use ethers::{
     prelude::ContractError,
     providers::{Http, Provider},
     signers::LocalWallet,
-    types::Address,
+    types::{Address, Bytes, U256},
 };
 use log::info;
 use std::sync::Arc;
@@ -113,9 +113,10 @@ impl Eas {
     ///
     /// A Result which is an Ok if the attestation type hash was successfully retrieved, else an Err.
     pub async fn get_attest_type_hash(&self) -> Result<(), ContractError<Signer>> {
-        let result = self.eas.get_attest_type_hash().call().await?;
+        let call = self.eas.get_attest_type_hash();
+        let res = call.send().await?;
 
-        info!("Attestation type hash: {:?}", result);
+        info!("Attestation type hash: {:?}", res);
         Ok(())
     }
 
@@ -129,9 +130,138 @@ impl Eas {
     ///
     /// A Result which is an Ok if the attestation was successfully retrieved, else an Err.
     pub async fn get_attestation(&self, uid: [u8; 32]) -> Result<(), ContractError<Signer>> {
-        let result = self.eas.get_attestation(uid).call().await?;
+        let call = self.eas.get_attestation(uid);
+        let res = call.send().await?;
 
-        info!("Attestation: {:?}", result);
+        info!("Attestation: {:?}", res);
+        Ok(())
+    }
+
+    /// Retrieves the domain separator of the EAS contract.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the domain separator was successfully retrieved, else an Err.
+    pub async fn get_domain_separator(&self) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.get_domain_separator();
+        let res = call.send().await?;
+
+        info!("Domain separator: {:?}", res);
+        Ok(())
+    }
+
+    /// Retrieves the name of the EAS contract.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the name was successfully retrieved, else an Err.
+    pub async fn get_name(&self) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.get_name();
+        let res = call.send().await?;
+
+        info!("Name: {:?}", res);
+        Ok(())
+    }
+
+    /// Retrieves the nonce of the provided account.
+    ///
+    /// # Parameters
+    ///
+    /// * `account`: The account for which to retrieve the nonce.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the nonce was successfully retrieved, else an Err.
+    pub async fn get_nonce(
+        &self,
+        account: ::ethers::core::types::Address,
+    ) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.get_nonce(account);
+        let res = call.send().await?;
+
+        info!("Nonce: {:?}", res);
+        Ok(())
+    }
+
+    /// Retrieves the offchain revocation for the provided revoker and data.
+    ///
+    /// # Parameters
+    ///
+    /// * `revoker`: The revoker for which to retrieve the offchain revocation.
+    /// * `data`: The data for which to retrieve the offchain revocation.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the offchain revocation was successfully retrieved, else an Err.
+    pub async fn get_revoke_offchain(
+        &self,
+        revoker: ::ethers::core::types::Address,
+        data: [u8; 32],
+    ) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.get_revoke_offchain(revoker, data);
+        let res = call.send().await?;
+
+        info!("Revoke offchain: {:?}", res);
+        Ok(())
+    }
+
+    /// Retrieves the revocation type hash of the EAS contract.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the revocation type hash was successfully retrieved, else an Err.
+    pub async fn get_revoke_type_hash(&self) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.get_revoke_type_hash();
+        let res = call.send().await?;
+
+        info!("Revoke type hash: {:?}", res);
+        Ok(())
+    }
+
+    /// Retrieves the schema registry of the EAS contract.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the schema registry was successfully retrieved, else an Err.
+    pub async fn get_schema_registry(&self) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.get_schema_registry();
+        let res = call.send().await?;
+
+        info!("Schema registry: {:?}", res);
+        Ok(())
+    }
+
+    /// Retrieves the timestamp for the provided data.
+    ///
+    /// # Parameters
+    ///
+    /// * `data`: The data for which to retrieve the timestamp.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the timestamp was successfully retrieved, else an Err.
+    pub async fn get_timestamp(&self, data: [u8; 32]) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.get_timestamp(data);
+        let res = call.send().await?;
+
+        info!("Timestamp: {:?}", res);
+        Ok(())
+    }
+
+    /// Checks if the attestation for the provided UID is valid.
+    ///
+    /// # Parameters
+    ///
+    /// * `uid`: The UID for which to check the attestation.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the attestation was successfully checked, else an Err.
+    pub async fn is_attestation_valid(&self, uid: [u8; 32]) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.is_attestation_valid(uid);
+        let res = call.send().await?;
+
+        info!("Is attestation valid: {:?}", res);
         Ok(())
     }
 
@@ -239,6 +369,107 @@ impl Eas {
         Ok(())
     }
 
+    /// Performs multiple timestamp actions with the provided data.
+    ///
+    /// # Parameters
+    ///
+    /// * `data`: The vector of 32-byte arrays to be timestamped.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the multiple timestamps were successful, else an Err.
+    pub async fn multi_timestamp(&self, data: Vec<[u8; 32]>) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.multi_timestamp(data);
+        let res = call.send().await?;
+
+        info!("Multi timestamp result: {:?}", res);
+        Ok(())
+    }
+
+    /// Revokes an attestation with the provided request.
+    ///
+    /// # Parameters
+    ///
+    /// * `request`: The RevocationRequest to be sent.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the revocation was successful, else an Err.
+    pub async fn revoke(&self, request: RevocationRequest) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.revoke(request);
+        let res = call.send().await?;
+
+        info!("Revoke result: {:?}", res);
+        Ok(())
+    }
+
+    /// Revokes an attestation by delegation with the provided request.
+    ///
+    /// # Parameters
+    ///
+    /// * `delegated_request`: The DelegatedRevocationRequest to be sent.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the revocation by delegation was successful, else an Err.
+    pub async fn revoke_by_delegation(
+        &self,
+        delegated_request: DelegatedRevocationRequest,
+    ) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.revoke_by_delegation(delegated_request);
+        let res = call.send().await?;
+
+        info!("Revoke by delegation result: {:?}", res);
+        Ok(())
+    }
+
+    /// Revokes an attestation off-chain with the provided data.
+    ///
+    /// # Parameters
+    ///
+    /// * `data`: The 32-byte array to be revoked off-chain.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the off-chain revocation was successful, else an Err.
+    pub async fn revoke_offchain(&self, data: [u8; 32]) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.revoke_offchain(data);
+        let res = call.send().await?;
+
+        info!("Revoke offchain result: {:?}", res);
+        Ok(())
+    }
+
+    /// Performs a timestamp action with the provided data.
+    ///
+    /// # Parameters
+    ///
+    /// * `data`: The 32-byte array to be timestamped.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the timestamp was successful, else an Err.
+    pub async fn timestamp(&self, data: [u8; 32]) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.timestamp(data);
+        let res = call.send().await?;
+
+        info!("Timestamp result: {:?}", res);
+        Ok(())
+    }
+
+    /// Retrieves the version of the EAS contract.
+    ///
+    /// # Returns
+    ///
+    /// A Result which is an Ok if the version was successfully retrieved, else an Err.
+    pub async fn version(&self) -> Result<(), ContractError<Signer>> {
+        let call = self.eas.version();
+        let res = call.send().await?;
+
+        info!("Version: {:?}", res);
+        Ok(())
+    }
+
     /// Constructs and returns the attestation data.
     ///
     /// # Parameters
@@ -254,12 +485,12 @@ impl Eas {
     ///
     /// An instance of AttestationRequestData.
     pub fn get_attestation_data(
-        recipient: ::ethers::core::types::Address,
+        recipient: Address,
         expiration_time: u64,
         revocable: bool,
         ref_uid: [u8; 32],
-        data: ::ethers::core::types::Bytes,
-        value: ::ethers::core::types::U256,
+        data: Bytes,
+        value: U256,
     ) -> AttestationRequestData {
         AttestationRequestData {
             recipient,
@@ -385,7 +616,9 @@ mod tests {
         let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
-        assert!(eas.get_attest_type_hash().await.is_ok());
+        let res = eas.get_attest_type_hash().await;
+        res.unwrap();
+
         drop(anvil);
     }
 
@@ -398,7 +631,123 @@ mod tests {
 
         let uid = [0u8; 32];
 
-        assert!(eas.get_attestation(uid).await.is_ok());
+        let res = eas.get_attestation(uid).await;
+
+        assert!(res.is_ok());
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_get_domain_separator() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let res = eas.get_domain_separator().await;
+
+        assert!(res.is_ok());
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_get_name() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let _res = eas.get_name().await.unwrap();
+
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_get_nonce() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let account = Address::zero();
+
+        let res = eas.get_nonce(account).await;
+
+        res.unwrap();
+
+        // assert!(res.is_ok());
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_get_revoke_offchain() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let revoker = Address::zero();
+        let data = [0u8; 32];
+
+        let res = eas.get_revoke_offchain(revoker, data).await;
+
+        assert!(res.is_ok());
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_get_revoke_type_hash() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let res = eas.get_revoke_type_hash().await;
+
+        assert!(res.is_ok());
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_get_schema_registry() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let res = eas.get_schema_registry().await;
+
+        assert!(res.is_ok());
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_get_timestamp() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let data = [0u8; 32];
+
+        let res = eas.get_timestamp(data).await;
+
+        assert!(res.is_ok());
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_is_attestation_valid() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let uid = [0u8; 32];
+
+        let res = eas.is_attestation_valid(uid).await;
+
+        assert!(res.is_ok());
         drop(anvil);
     }
 
@@ -520,6 +869,90 @@ mod tests {
         let data = [0u8; 32];
 
         assert!(eas.multi_revoke_offchain(vec![data]).await.is_ok());
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_multi_timestamp() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let data = vec![[0; 32]; 10];
+        let res = eas.multi_timestamp(data).await;
+
+        assert!(res.is_ok());
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_revoke() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let request = RevocationRequest::default();
+
+        let res = eas.revoke(request).await;
+
+        assert!(res.is_ok());
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_revoke_by_delegation() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let delegated_request = DelegatedRevocationRequest::default();
+        let res = eas.revoke_by_delegation(delegated_request).await;
+
+        assert!(res.is_ok());
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_revoke_offchain() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let data = [0; 32];
+        let res = eas.revoke_offchain(data).await;
+
+        assert!(res.is_ok());
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_timestamp() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let data = [0; 32];
+        let res = eas.timestamp(data).await;
+
+        assert!(res.is_ok());
+        drop(anvil);
+    }
+
+    #[tokio::test]
+    async fn test_eas_version() {
+        let anvil = Anvil::new().spawn();
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
+        let schema_registry = Address::from([0x42; 20]);
+        eas.deploy(schema_registry).await.unwrap();
+
+        let res = eas.version().await;
+
+        assert!(res.is_ok());
         drop(anvil);
     }
 }
