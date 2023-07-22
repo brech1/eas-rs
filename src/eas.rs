@@ -289,10 +289,9 @@ mod tests {
 
     const TEST_MNEMONIC: &'static str =
         "test test test test test test test test test test test junk";
-    const TEST_NODE_URL: &'static str = "http://localhost:8545";
 
-    async fn setup_eas() -> Eas {
-        let provider = Provider::<Http>::try_from(TEST_NODE_URL).unwrap();
+    async fn setup_eas(node_url: &str) -> Eas {
+        let provider = Provider::<Http>::try_from(node_url).unwrap();
         let wallet = MnemonicBuilder::<English>::default()
             .phrase(TEST_MNEMONIC)
             .build()
@@ -305,14 +304,14 @@ mod tests {
     #[tokio::test]
     async fn test_eas_new() {
         let anvil = Anvil::new().spawn();
-        setup_eas().await;
+        setup_eas(anvil.endpoint().as_str()).await;
         drop(anvil);
     }
 
     #[tokio::test]
     async fn test_eas_deploy() {
         let anvil = Anvil::new().spawn();
-        let eas = setup_eas().await;
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
         let schema_registry = Address::from([0x42; 20]);
 
         let res = eas.deploy(schema_registry).await;
@@ -324,7 +323,7 @@ mod tests {
     #[tokio::test]
     async fn test_eas_attest() {
         let anvil = Anvil::new().spawn();
-        let eas = setup_eas().await;
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
         let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
@@ -351,7 +350,7 @@ mod tests {
     #[tokio::test]
     async fn test_eas_attest_by_delegation() {
         let anvil = Anvil::new().spawn();
-        let eas = setup_eas().await;
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
         let schema_registry: ethers::types::H160 = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
@@ -382,7 +381,7 @@ mod tests {
     #[tokio::test]
     async fn test_eas_get_attest_type_hash() {
         let anvil = Anvil::new().spawn();
-        let eas = setup_eas().await;
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
         let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
@@ -393,7 +392,7 @@ mod tests {
     #[tokio::test]
     async fn test_eas_get_attestation() {
         let anvil = Anvil::new().spawn();
-        let eas = setup_eas().await;
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
         let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
@@ -406,7 +405,7 @@ mod tests {
     #[tokio::test]
     async fn test_eas_multi_attest() {
         let anvil = Anvil::new().spawn();
-        let eas = setup_eas().await;
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
         let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
@@ -434,7 +433,7 @@ mod tests {
     #[tokio::test]
     async fn test_eas_multi_attest_by_delegation() {
         let anvil = Anvil::new().spawn();
-        let eas = setup_eas().await;
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
         let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
@@ -464,7 +463,7 @@ mod tests {
     #[tokio::test]
     async fn test_eas_multi_revoke() {
         let anvil = Anvil::new().spawn();
-        let eas = setup_eas().await;
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
         let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
@@ -488,7 +487,7 @@ mod tests {
     #[tokio::test]
     async fn test_eas_multi_revoke_by_delegation() {
         let anvil = Anvil::new().spawn();
-        let eas = setup_eas().await;
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
         let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
@@ -514,7 +513,7 @@ mod tests {
     #[tokio::test]
     async fn test_eas_multi_revoke_offchain() {
         let anvil = Anvil::new().spawn();
-        let eas = setup_eas().await;
+        let eas = setup_eas(anvil.endpoint().as_str()).await;
         let schema_registry = Address::from([0x42; 20]);
         eas.deploy(schema_registry).await.unwrap();
 
