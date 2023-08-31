@@ -6,4 +6,6 @@
 // Re-exporting the eas_contracts crate for public use.
 pub use eas_contracts;
 
+pub mod constants;
 pub mod eas;
+pub mod schema_registry;
