@@ -74,15 +74,17 @@ impl Eas {
     /// # Returns
     ///
     /// A Result which is an Ok if the EAS was successfully deployed, else an Err.
-    pub async fn deploy(&mut self, schema_registry: Address) -> Result<(), ContractError<Signer>> {
+    pub async fn deploy(
+        &mut self,
+        schema_registry: Address,
+    ) -> Result<Address, ContractError<Signer>> {
         let deployment = EAS::deploy(self.signer.clone(), schema_registry)?;
         let address = deployment.send().await?.address();
 
         // Update the EAS instance with the deployed contract address.
         self.eas = EAS::new(address, self.signer.clone());
 
-        info!("EAS deployed at: {:?}", address);
-        Ok(())
+        Ok(address)
     }
 
     /// Performs an attestation with the provided request.
