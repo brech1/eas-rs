@@ -65,15 +65,14 @@ impl SchemaRegistryContract {
     /// # Returns
     ///
     /// A Result which is an Ok if the registry was successfully deployed, else an Err.
-    pub async fn deploy(&mut self, schema_registry: Address) -> Result<(), ContractError<Signer>> {
-        let deployment = SchemaRegistry::deploy(self.signer.clone(), schema_registry)?;
+    pub async fn deploy(&mut self) -> Result<Address, ContractError<Signer>> {
+        let deployment = SchemaRegistry::deploy(self.signer.clone(), ())?;
         let address = deployment.send().await?.address();
 
         // Update the Schema Registry instance with the deployed contract address.
         self.schema_registry = SchemaRegistry::new(address, self.signer.clone());
 
-        info!("Schema Registry deployed at: {:?}", address);
-        Ok(())
+        Ok(address)
     }
 
     /// Registers a new schema on the Schema Registry.
