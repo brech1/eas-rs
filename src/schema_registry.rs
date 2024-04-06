@@ -2,7 +2,6 @@ use crate::eas::Signer;
 use alloy_sol_types::SolType;
 use eas_contracts::{schema_registry::SchemaRegistry, value_resolver::SchemaRecord};
 use ethers::{prelude::ContractError, providers::ProviderError, types::Address};
-use log::info;
 use std::sync::Arc;
 
 pub struct SchemaField<T: SolType> {
